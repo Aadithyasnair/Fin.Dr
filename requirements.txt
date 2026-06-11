@@ -1,0 +1,27 @@
+# ── Core Flask ────────────────────────────────────────────────
+flask==3.1.1
+flask-cors==5.0.1
+
+# ── ML / Data Science ─────────────────────────────────────────
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.5.2
+imbalanced-learn==0.12.4
+joblib==1.4.2
+
+# ── TensorFlow ────────────────────────────────────────────────
+tensorflow==2.17.0
+
+# ── PyTorch (CPU) ─────────────────────────────────────────────
+torch==2.4.1
+torchvision==0.19.1
+
+# Voice handling moved to browser — no server-side TTS/STT dependencies
+
+# ── Database ──────────────────────────────────────────────────
+# sqlite3 is built-in
+
+# ── Utilities ─────────────────────────────────────────────────
+python-dotenv==1.0.1
+requests==2.32.3
+werkzeug==3.1.3

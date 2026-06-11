@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIN.DR — AI Fraud Detection Control Centre</title>
+  <meta name="description" content="FIN.DR: Real-time AI-powered fraud detection dashboard with voice verification, deep learning risk scoring, and analytics." />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <!-- Custom CSS -->
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon"><i class="bi bi-shield-fill-check"></i></span>
+    <span class="brand-text">FIN<span class="brand-accent">.DR</span></span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-panel="analyze" onclick="showPanel('analyze',this)">
+      <i class="bi bi-search"></i><span>Analyze</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="predictions" onclick="showPanel('predictions',this)">
+      <i class="bi bi-cpu"></i><span>AI Scores</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="voice" onclick="showPanel('voice',this)">
+      <i class="bi bi-mic-fill"></i><span>Voice Verify</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="analytics" onclick="showPanel('analytics',this)">
+      <i class="bi bi-graph-up-arrow"></i><span>Analytics</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="logs" onclick="showPanel('logs',this)">
+      <i class="bi bi-journal-code"></i><span>Logs</span>
+    </a>
+    <a href="#" class="nav-item" data-panel="models" onclick="showPanel('models',this)">
+      <i class="bi bi-sliders2"></i><span>Models</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="system-status">
+      <span class="status-dot" id="systemStatusDot"></span>
+      <span id="systemStatusText">System Online</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════ MAIN CONTENT ══════════════════════ -->
+<main class="main-content" id="mainContent">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <h1 class="page-title" id="pageTitle">Transaction Analysis</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><span class="pulse-dot"></span>LIVE</div>
+      <span class="topbar-time" id="topbarTime"></span>
+      <span class="topbar-user"><i class="bi bi-person-circle"></i> Admin</span>
+    </div>
+  </header>
+
+  <!-- ─────────────── PANEL: ANALYZE ─────────────── -->
+  <section class="panel active" id="panel-analyze">
+    <div class="panel-grid-2">
+      <!-- Input Card -->
+      <div class="glass-card">
+        <div class="card-header-custom">
+          <i class="bi bi-send-fill card-icon icon-blue"></i>
+          <div>
+            <h2 class="card-title">Transaction Input</h2>
+            <p class="card-subtitle">Submit a transaction for AI fraud analysis</p>
+          </div>
+        </div>
+
+        <form id="txnForm" onsubmit="analyzeTransaction(event)">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Amount (₹)</label>
+              <div class="input-wrapper">
+                <i class="bi bi-currency-rupee input-icon"></i>
+                <input type="number" id="inAmount" class="form-input" placeholder="e.g. 4999" step="0.01" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">User ID</label>
+              <div class="input-wrapper">
+                <i class="bi bi-person input-icon"></i>
+                <input type="text" id="inUserId" class="form-input" placeholder="USR001" value="USR001" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Merchant</label>
+            <div class="input-wrapper">
+              <i class="bi bi-shop input-icon"></i>
+              <input type="text" id="inMerchant" class="form-input" placeholder="e.g. Amazon India" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Timestamp</label>
+              <div class="input-wrapper">
+                <i class="bi bi-calendar3 input-icon"></i>
+                <input type="datetime-local" id="inTimestamp" class="form-input" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Card Type</label>
+              <div class="input-wrapper">
+                <i class="bi bi-credit-card input-icon"></i>
+                <select id="inCardType" class="form-input form-select-custom">
+                  <option>VISA</option>
+                  <option>MasterCard</option>
+                  <option>RuPay</option>
+                  <option>Amex</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Transaction Type</label>
+              <div class="input-wrapper">
+                <i class="bi bi-tag input-icon"></i>
+                <select id="inTxnType" class="form-input form-select-custom">
+                  <option value="purchase">Purchase / Shopping</option>
+                  <option value="self_transfer">Self Transfer (Own Account)</option>
+                  <option value="bill_payment">Bill / Utility Payment</option>
+                  <option value="emi">EMI Payment</option>
+                  <option value="upi_transfer">UPI Transfer</option>
+                  <option value="cash_withdrawal">Cash Withdrawal</option>
+                  <option value="salary_credit">Salary / Income Credit</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <div class="input-wrapper">
+                <i class="bi bi-geo-alt input-icon"></i>
+                <input type="text" id="inLocation" class="form-input" placeholder="e.g. Mumbai, India" />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary-glow" id="analyzeBtn">
+            <i class="bi bi-cpu-fill"></i>
+            <span id="analyzeBtnText">Analyze Transaction</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Result Card -->
+      <div class="glass-card" id="quickResultCard" style="display:none;">
+        <div class="card-header-custom">
+          <i class="bi bi-activity card-icon icon-green"></i>
+          <div>
+            <h2 class="card-title">Instant Result</h2>
+            <p class="card-subtitle" id="resultTxnId">TXN ID: —</p>
+          </div>
+        </div>
+
+        <!-- Decision Banner -->
+        <div class="decision-banner" id="decisionBanner">
+          <div class="decision-icon" id="decisionIcon">—</div>
+          <div class="decision-text" id="decisionText">—</div>
+        </div>
+
+        <!-- Score Meters -->
+        <div class="score-meters">
+          <div class="score-row">
+            <span class="score-label"><i class="bi bi-layers"></i> TensorFlow DNN</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="barTf"></div>
+            </div>
+            <span class="score-val" id="valTf">—</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label"><i class="bi bi-diagram-3"></i> Transformer</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="barTr"></div>
+            </div>
+            <span class="score-val" id="valTr">—</span>
+          </div>
+          <div class="score-row">
+            <span class="score-label"><i class="bi bi-exclamation-diamond"></i> Anomaly</span>
+            <div class="score-bar-wrap">
+              <div class="score-bar" id="barAn"></div>
+            </div>
+            <span class="score-val" id="valAn">—</span>
+          </div>
+        </div>
+
+        <!-- Final Gauge -->
+        <div class="gauge-container">
+          <div class="gauge-label">FINAL RISK SCORE</div>
+          <div class="gauge-wrap">
+            <svg class="gauge-svg" viewBox="0 0 200 110">
+              <path class="gauge-bg" d="M 20 100 A 80 80 0 0 1 180 100" />
+              <path class="gauge-fill" id="gaugeFill" d="M 20 100 A 80 80 0 0 1 180 100"
+                    stroke-dasharray="0 251" />
+              <text x="100" y="88" class="gauge-value" id="gaugeValue">0%</text>
+              <text x="100" y="105" class="gauge-sub">Risk Score</text>
+            </svg>
+            <div class="gauge-ticks">
+              <span class="tick-low">Low</span>
+              <span class="tick-mid">Review</span>
+              <span class="tick-high">High</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- LLM Explanation -->
+        <div class="llm-box" id="llmBox" style="display:none;">
+          <div class="llm-header"><i class="bi bi-stars"></i> AI Explanation</div>
+          <p class="llm-text" id="llmText"></p>
+        </div>
+
+        <!-- Voice CTA -->
+        <button class="btn-voice-trigger" id="voiceTriggerBtn" style="display:none;"
+                onclick="triggerVoiceVerification()">
+          <i class="bi bi-telephone-fill"></i> Trigger Voice Verification
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── PANEL: AI SCORES ─────────────── -->
+  <section class="panel" id="panel-predictions">
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><i class="bi bi-layers-fill"></i></div>
+        <div class="kpi-val" id="kpiTf">—</div>
+        <div class="kpi-label">TensorFlow Score</div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-icon"><i class="bi bi-diagram-3-fill"></i></div>
+        <div class="kpi-val" id="kpiTr">—</div>
+        <div class="kpi-label">Transformer Score</div>
+      </div>
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-icon"><i class="bi bi-exclamation-diamond-fill"></i></div>
+        <div class="kpi-val" id="kpiAn">—</div>
+        <div class="kpi-label">Anomaly Score</div>
+      </div>
+      <div class="kpi-card kpi-red" id="kpiFinalCard">
+        <div class="kpi-icon"><i class="bi bi-shield-exclamation"></i></div>
+        <div class="kpi-val" id="kpiFinal">—</div>
+        <div class="kpi-label">Final Risk Score</div>
+      </div>
+    </div>
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <i class="bi bi-info-circle card-icon icon-blue"></i>
+        <div>
+          <h2 class="card-title">Model Explanation</h2>
+          <p class="card-subtitle">Fusion weights: TF 45% · Transformer 45% · Anomaly 10%</p>
+        </div>
+      </div>
+      <div class="reason-box" id="reasonBox">
+        <p>Submit a transaction to see AI explanation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── PANEL: VOICE VERIFY ─────────────── -->
+  <section class="panel" id="panel-voice">
+    <div class="panel-grid-2">
+      <div class="glass-card">
+        <div class="card-header-custom">
+          <i class="bi bi-mic-fill card-icon icon-green"></i>
+          <div>
+            <h2 class="card-title">Voice Verification</h2>
+            <p class="card-subtitle">Real-time call verification with speech recognition</p>
+          </div>
+        </div>
+
+        <div class="voice-info-box">
+          <div class="voice-txn-detail"><strong>Transaction ID:</strong> <span id="voiceTxnId">—</span></div>
+          <div class="voice-txn-detail"><strong>Amount:</strong> <span id="voiceAmount">—</span></div>
+          <div class="voice-txn-detail"><strong>Merchant:</strong> <span id="voiceMerchant">—</span></div>
+        </div>
+
+        <div class="voice-status-ring" id="voiceRing">
+          <div class="ring-outer"></div>
+          <div class="ring-middle"></div>
+          <div class="ring-inner">
+            <i class="bi bi-mic-fill" id="voiceStatusIcon"></i>
+          </div>
+        </div>
+
+        <div class="voice-status-text" id="voiceStatusText">Ready to verify</div>
+        <div class="voice-phase-badge" id="voicePhaseBadge">IDLE</div>
+
+        <div class="voice-controls">
+          <button class="btn-voice-start" id="startVoiceBtn" onclick="startVoiceVerification()">
+            <i class="bi bi-telephone-fill"></i> Start Voice Verification
+          </button>
+          <div class="keyboard-input-row" id="keyboardInputRow" style="display:none;">
+            <input type="text" id="keyboardInput" class="form-input" placeholder='Type response or press "1" to skip' />
+            <button class="btn-send-input" onclick="sendKeyboardInput()">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="voice-result-box" id="voiceResultBox" style="display:none;">
+          <div class="vr-status" id="vrStatus">—</div>
+          <div class="vr-reason" id="vrReason"></div>
+          <div class="vr-followup" id="vrFollowup"></div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header-custom">
+          <i class="bi bi-journal-text card-icon icon-purple"></i>
+          <div>
+            <h2 class="card-title">Verification Guide</h2>
+            <p class="card-subtitle">How the voice agent works</p>
+          </div>
+        </div>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">System Speaks</div>
+              <div class="step-desc">Agent reads out transaction details and asks "Did you authorize this?"</div>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Parallel Listening</div>
+              <div class="step-desc">Microphone (Google STT) + keyboard input run in parallel. First response wins.</div>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Response Detection</div>
+              <div class="step-desc">Positive: "yes / I did / I authorized" → APPROVED<br/>Negative: "no / not me / fraud" → FRAUD REVIEW</div>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Follow-Up</div>
+              <div class="step-desc">If negative, asks "Was anyone else authorized?" and escalates accordingly.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── PANEL: ANALYTICS ─────────────── -->
+  <section class="panel" id="panel-analytics">
+    <div class="analytics-kpis" id="analyticsKpis">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><i class="bi bi-arrow-left-right"></i></div>
+        <div class="kpi-val" id="aTotal">0</div>
+        <div class="kpi-label">Total Transactions</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="kpi-val" id="aApprove">0</div>
+        <div class="kpi-label">Approved</div>
+      </div>
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-icon"><i class="bi bi-telephone-fill"></i></div>
+        <div class="kpi-val" id="aCallUser">0</div>
+        <div class="kpi-label">Verification Required</div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon"><i class="bi bi-x-circle-fill"></i></div>
+        <div class="kpi-val" id="aBlocked">0</div>
+        <div class="kpi-label">Blocked</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="glass-card chart-card-lg">
+        <div class="card-header-custom">
+          <i class="bi bi-graph-up card-icon icon-blue"></i>
+          <div>
+            <h2 class="card-title">7-Day Fraud Trend</h2>
+            <p class="card-subtitle">Daily transaction volume vs fraud detections</p>
+          </div>
+        </div>
+        <canvas id="trendChart" height="200"></canvas>
+      </div>
+
+      <div class="glass-card chart-card-sm">
+        <div class="card-header-custom">
+          <i class="bi bi-pie-chart-fill card-icon icon-purple"></i>
+          <div>
+            <h2 class="card-title">Decision Breakdown</h2>
+            <p class="card-subtitle">Approved vs review vs blocked</p>
+          </div>
+        </div>
+        <canvas id="pieChart" height="220"></canvas>
+      </div>
+
+      <div class="glass-card chart-card-full">
+        <div class="card-header-custom">
+          <i class="bi bi-activity card-icon icon-orange"></i>
+          <div>
+            <h2 class="card-title">Risk Score Timeline</h2>
+            <p class="card-subtitle">Last 20 transactions final risk score</p>
+          </div>
+        </div>
+        <canvas id="timelineChart" height="160"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── PANEL: LOGS ─────────────── -->
+  <section class="panel" id="panel-logs">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <i class="bi bi-journal-code card-icon icon-blue"></i>
+        <div>
+          <h2 class="card-title">Transaction Logs</h2>
+          <p class="card-subtitle">Live feed — auto-refreshes every 5 seconds</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="logs-controls">
+        <div class="input-wrapper search-wrap">
+          <i class="bi bi-search input-icon"></i>
+          <input type="text" id="logSearch" class="form-input" placeholder="Search merchant, user, ID..." oninput="filterLogs()" />
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" onclick="setFilter('ALL',this)">All</button>
+          <button class="filter-tab" onclick="setFilter('APPROVE',this)">Approved</button>
+          <button class="filter-tab" onclick="setFilter('CALL_USER',this)">Review</button>
+          <button class="filter-tab" onclick="setFilter('BLOCK_TRANSACTION',this)">Blocked</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="data-table" id="logsTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('id')">TXN ID <i class="bi bi-arrow-down-up"></i></th>
+              <th onclick="sortTable('user_id')">User <i class="bi bi-arrow-down-up"></i></th>
+              <th onclick="sortTable('amount')">Amount <i class="bi bi-arrow-down-up"></i></th>
+              <th>Merchant</th>
+              <th onclick="sortTable('final_score')">Risk Score <i class="bi bi-arrow-down-up"></i></th>
+              <th>Decision</th>
+              <th>Voice</th>
+              <th onclick="sortTable('created_at')">Time <i class="bi bi-arrow-down-up"></i></th>
+            </tr>
+          </thead>
+          <tbody id="logsBody">
+            <tr><td colspan="8" class="empty-state">No transactions yet. Submit one to begin.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── PANEL: MODELS ─────────────── -->
+  <section class="panel" id="panel-models">
+    <div class="panel-grid-3">
+      <!-- TF Model -->
+      <div class="glass-card model-card">
+        <div class="model-icon icon-blue"><i class="bi bi-layers-fill"></i></div>
+        <h3 class="model-name">TensorFlow DNN</h3>
+        <p class="model-desc">4-layer Dense network with BatchNorm + Dropout. Sigmoid binary output. Class-weighted for fraud imbalance.</p>
+        <div class="model-meta">
+          <span><i class="bi bi-diagram-2"></i> 256→128→64→1</span>
+          <span><i class="bi bi-percent"></i> Weight: 45%</span>
+        </div>
+        <div class="retrain-status" id="tfStatus">—</div>
+        <button class="btn-retrain" onclick="retrain('tensorflow')">
+          <i class="bi bi-arrow-clockwise"></i> Retrain Model
+        </button>
+      </div>
+
+      <!-- Transformer Model -->
+      <div class="glass-card model-card">
+        <div class="model-icon icon-purple"><i class="bi bi-diagram-3-fill"></i></div>
+        <h3 class="model-name">PyTorch Transformer</h3>
+        <p class="model-desc">Tabular transformer with multi-head attention (4 heads, 2 layers). Feature embeddings + classification head.</p>
+        <div class="model-meta">
+          <span><i class="bi bi-diagram-2"></i> d_model=64, heads=4</span>
+          <span><i class="bi bi-percent"></i> Weight: 45%</span>
+        </div>
+        <div class="retrain-status" id="trStatus">—</div>
+        <button class="btn-retrain" onclick="retrain('transformer')">
+          <i class="bi bi-arrow-clockwise"></i> Retrain Model
+        </button>
+      </div>
+
+      <!-- Isolation Forest -->
+      <div class="glass-card model-card">
+        <div class="model-icon icon-orange"><i class="bi bi-exclamation-diamond-fill"></i></div>
+        <h3 class="model-name">Isolation Forest</h3>
+        <p class="model-desc">Unsupervised anomaly detection. 200 estimators. Contamination matches fraud rate. Score normalised to 0–1.</p>
+        <div class="model-meta">
+          <span><i class="bi bi-diagram-2"></i> n_estimators=200</span>
+          <span><i class="bi bi-percent"></i> Weight: 10%</span>
+        </div>
+        <div class="retrain-status" id="isStatus">—</div>
+        <button class="btn-retrain" onclick="retrain('isolation')">
+          <i class="bi bi-arrow-clockwise"></i> Retrain Model
+        </button>
+      </div>
+    </div>
+
+    <!-- Reload All -->
+    <div class="glass-card mt-3">
+      <div class="card-header-custom">
+        <i class="bi bi-arrow-repeat card-icon icon-green"></i>
+        <div>
+          <h2 class="card-title">Model Management</h2>
+          <p class="card-subtitle">Reload models from disk without restarting the server</p>
+        </div>
+      </div>
+      <button class="btn-primary-glow" onclick="reloadModels()" style="max-width:260px;">
+        <i class="bi bi-arrow-repeat"></i> Reload All Models
+      </button>
+      <div class="retrain-status mt-2" id="reloadStatus"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════ TOAST CONTAINER ══════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>
